@@ -25,17 +25,24 @@ type AuthenticodeTimestampRequest struct {
 func Authenticode(w http.ResponseWriter, body []byte) {
 	rawAsnData := make([]byte, 128)
 	n, err := base64.StdEncoding.Decode(rawAsnData, body)
-	if err != nil && n == 0 {
+	if err != nil && n != len(body)-1 {
 		ErrorPage(w, http.StatusInternalServerError,
 			"Error has occured. For more information, refer to the console",
 		)
-		log.Printf("Body cannot be decoded: %s", err)
+		log.Printf("Body cannot be decoded (Base64): %s", err)
 		return
 	}
 	rawAsnData = rawAsnData[:n]
 
 	req := &AuthenticodeTimestampRequest{}
-	asn1.Unmarshal(rawAsnData, req)
+	_, err = asn1.Unmarshal(rawAsnData, req)
+	if err != nil {
+		ErrorPage(w, http.StatusInternalServerError,
+			"Error has occured. For more information, refer to the console",
+		)
+		log.Printf("Body cannot be decoded (ASN.1): %s", err)
+		return
+	}
 
 	signedData, err := cms.Sign(req.Payload.Data.Bytes[2:], []*x509.Certificate{signingCertificate}, signingKey)
 	if err != nil {
@@ -45,11 +52,20 @@ func Authenticode(w http.ResponseWriter, body []byte) {
 		log.Printf("Body cannot be signed: %s", err)
 		return
 	}
+
 	pemSigData := pem.EncodeToMemory(&pem.Block{
 		Type:  "CMS",
 		Bytes: signedData,
 	})
+	if pemSigData == nil {
+		ErrorPage(w, http.StatusInternalServerError,
+			"Error has occured. For more information, refer to the console",
+		)
+		log.Print("Signed data PEM encoded equals NULL")
+		return
+	}
 	pemSigData = pemSigData[20 : len(pemSigData)-18]
 
+	w.Header().Add("Content-Type", AUTHENTICODE_CONTENT_TYPE)
 	fmt.Fprintf(w, "%s", pemSigData)
 }

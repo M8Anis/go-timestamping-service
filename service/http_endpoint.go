@@ -8,7 +8,9 @@ import (
 	"strings"
 )
 
-const RFC3161_CONTENT_TYPE string = "application/timestamp-query"
+const RFC3161_REPLY string = "application/timestamp-query"
+const RFC3161_QUERY string = "application/timestamp-reply"
+
 const AUTHENTICODE_CONTENT_TYPE string = "application/octet-stream"
 
 func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
@@ -18,11 +20,11 @@ func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if RFC3161_CONTENT_TYPE != contentType && AUTHENTICODE_CONTENT_TYPE != contentType {
+	if RFC3161_QUERY != contentType && AUTHENTICODE_CONTENT_TYPE != contentType {
 		ErrorPage(w, http.StatusBadRequest,
 			fmt.Sprintf(
 				"`Content-Type` must be `%s` for RFC3161 or `%s` for Authenticode(tm)",
-				RFC3161_CONTENT_TYPE, AUTHENTICODE_CONTENT_TYPE,
+				RFC3161_QUERY, AUTHENTICODE_CONTENT_TYPE,
 			),
 		)
 		return
@@ -43,9 +45,9 @@ func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 
 	switch contentType {
-	case "application/timestamp-query":
+	case RFC3161_QUERY:
 		Rfc3161(w, body)
-	case "application/octet-stream":
+	case AUTHENTICODE_CONTENT_TYPE:
 		Authenticode(w, body)
 	}
 }
