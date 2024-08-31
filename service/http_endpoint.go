@@ -48,6 +48,6 @@ func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
 	case RFC3161_QUERY:
 		Rfc3161(w, body)
 	case AUTHENTICODE_CONTENT_TYPE:
-		Authenticode(w, body)
+		Authenticode(w, string(body))
 	}
 }

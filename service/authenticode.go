@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	cms "github.com/github/smimesign/ietf-cms"
 )
@@ -22,17 +23,19 @@ type AuthenticodeTimestampRequest struct {
 	}
 }
 
-func Authenticode(w http.ResponseWriter, body []byte) {
-	rawAsnData := make([]byte, 128)
-	n, err := base64.StdEncoding.Decode(rawAsnData, body)
-	if err != nil && n != len(body)-1 {
+func Authenticode(w http.ResponseWriter, body string) {
+	body = strings.ReplaceAll(body, "\r", "")
+	body = strings.ReplaceAll(body, "\n", "")
+	body = strings.ReplaceAll(body, "\x00", "")
+
+	rawAsnData, err := base64.StdEncoding.DecodeString(body)
+	if err != nil {
 		ErrorPage(w, http.StatusInternalServerError,
 			"Error has occured. For more information, refer to the console",
 		)
 		log.Printf("Body cannot be decoded (Base64): %s", err)
 		return
 	}
-	rawAsnData = rawAsnData[:n]
 
 	req := &AuthenticodeTimestampRequest{}
 	_, err = asn1.Unmarshal(rawAsnData, req)
