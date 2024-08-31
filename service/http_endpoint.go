@@ -8,8 +8,8 @@ import (
 	"strings"
 )
 
-const RFC3161_REPLY string = "application/timestamp-query"
-const RFC3161_QUERY string = "application/timestamp-reply"
+const RFC3161_REPLY string = "application/timestamp-reply"
+const RFC3161_QUERY string = "application/timestamp-query"
 
 const AUTHENTICODE_CONTENT_TYPE string = "application/octet-stream"
 
@@ -25,6 +25,16 @@ func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
 			fmt.Sprintf(
 				"`Content-Type` must be `%s` for RFC3161 or `%s` for Authenticode(tm)",
 				RFC3161_QUERY, AUTHENTICODE_CONTENT_TYPE,
+			),
+		)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		ErrorPage(w, http.StatusMethodNotAllowed,
+			fmt.Sprintf(
+				"Method `%s` is not allowed, use `%s` instead",
+				r.Method, http.MethodPost,
 			),
 		)
 		return
