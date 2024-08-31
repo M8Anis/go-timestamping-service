@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -27,8 +28,8 @@ func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	body := make([]byte, 4096)
-	n, err := r.Body.Read(body)
+	defer r.Body.Close()
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		ErrorPage(w, http.StatusInternalServerError,
 			"Error has occured. For more information, refer to the console",
@@ -36,7 +37,10 @@ func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
 		log.Printf("Body cannot be read: %s", err)
 		return
 	}
-	body = body[:n]
+	if len(body) == 0 {
+		ErrorPage(w, http.StatusBadRequest, "Request body must be present")
+		return
+	}
 
 	switch contentType {
 	case "application/timestamp-query":
