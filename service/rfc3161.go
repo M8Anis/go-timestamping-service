@@ -23,19 +23,16 @@ func Rfc3161(w http.ResponseWriter, derReq []byte) {
 	}
 
 	ts := timestamp.Timestamp{
-		HashAlgorithm: req.HashAlgorithm,
-		HashedMessage: req.HashedMessage,
-
-		Nonce: req.Nonce,
-
-		Time:     time.Now().UTC(),
-		Accuracy: time.Millisecond * 100,
-
 		AddTSACertificate: true,
 
-		Qualified: true,
-		Ordering:  true,
-		Policy:    asn1.ObjectIdentifier{2, 4, 5, 6},
+		HashAlgorithm: req.HashAlgorithm,
+		HashedMessage: req.HashedMessage,
+		Nonce:         req.Nonce,
+
+		Time: time.Now().UTC(),
+
+		// idk but its needed
+		Policy: asn1.ObjectIdentifier{0, 0, 0},
 	}
 
 	derResp, err := ts.CreateResponseWithOpts(signingCertificate, signingKey, crypto.SHA256)
