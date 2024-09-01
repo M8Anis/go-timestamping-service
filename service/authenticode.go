@@ -19,7 +19,7 @@ type AuthenticodeTimestampRequest struct {
 	Payload struct {
 		OID asn1.ObjectIdentifier
 
-		// idk its structure
+		// idk how to correctly parse this structure
 		Data asn1.RawValue
 	}
 }
@@ -49,7 +49,7 @@ func Authenticode(w http.ResponseWriter, pemReq string) {
 		return
 	}
 
-	// Cutting off the `req.Payload.Data.Bytes`, because I dunno how to parse his structure
+	// Cropping the `req.Payload.Data.Bytes`, because I dunno how to parse this structure
 	derResp, err := cms.Sign(req.Payload.Data.Bytes[2:], []*x509.Certificate{signingCertificate}, signingKey)
 	if err != nil {
 		ErrorPage(w, http.StatusInternalServerError,
@@ -73,6 +73,6 @@ func Authenticode(w http.ResponseWriter, pemReq string) {
 	// Removing the PEM header and footer from the response, as in the request
 	pemResp = pemResp[20 : len(pemResp)-18]
 
-	w.Header().Add("Content-Type", AUTHENTICODE_CONTENT_TYPE)
+	w.Header().Add("Content-Type", AUTHENTICODE)
 	fmt.Fprintf(w, "%s", pemResp)
 }
