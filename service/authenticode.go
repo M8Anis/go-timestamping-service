@@ -14,13 +14,14 @@ import (
 )
 
 type AuthenticodeTimestampRequest struct {
-	OID asn1.ObjectIdentifier
+	CounterSignatureType asn1.ObjectIdentifier
 
-	Payload struct {
-		OID asn1.ObjectIdentifier
+	ContentInfo struct {
+		ContentType asn1.ObjectIdentifier
 
-		// idk how to correctly parse this structure
-		Data asn1.RawValue
+		Content struct {
+			Bytes []byte // Signature
+		} `asn1:"tag:0"`
 	}
 }
 
@@ -49,8 +50,7 @@ func Authenticode(w http.ResponseWriter, pemReq string) {
 		return
 	}
 
-	// Cropping the `req.Payload.Data.Bytes`, because I dunno how to parse this structure
-	derResp, err := cms.Sign(req.Payload.Data.Bytes[2:], []*x509.Certificate{signingCertificate}, signingKey)
+	derResp, err := cms.Sign(req.ContentInfo.Content.Bytes, []*x509.Certificate{signingCertificate}, signingKey)
 	if err != nil {
 		ErrorPage(w, http.StatusInternalServerError,
 			"Error has occured. For more information, refer to the console",
