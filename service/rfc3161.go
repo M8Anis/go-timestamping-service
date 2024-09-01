@@ -11,13 +11,14 @@ import (
 	"github.com/digitorus/timestamp"
 )
 
-func Rfc3161(w http.ResponseWriter, body []byte) {
-	req, err := timestamp.ParseRequest(body)
+// At now, only SHA256 response signing is supported
+func Rfc3161(w http.ResponseWriter, derReq []byte) {
+	req, err := timestamp.ParseRequest(derReq)
 	if err != nil {
-		ErrorPage(w, http.StatusInternalServerError,
-			"Error has occured. For more information, refer to the console",
+		ErrorPage(w, http.StatusBadRequest,
+			"Error while parsing the request. For more information, refer to the console",
 		)
-		log.Printf("Body cannot be parsed: %s", err)
+		log.Printf("Request cannot be parsed: %s", err)
 		return
 	}
 
@@ -36,7 +37,8 @@ func Rfc3161(w http.ResponseWriter, body []byte) {
 		Ordering:  true,
 		Policy:    asn1.ObjectIdentifier{2, 4, 5, 6},
 	}
-	resp, err := ts.CreateResponseWithOpts(signingCertificate, signingKey, crypto.SHA256)
+
+	derResp, err := ts.CreateResponseWithOpts(signingCertificate, signingKey, crypto.SHA256)
 	if err != nil {
 		ErrorPage(w, http.StatusInternalServerError,
 			"Error has occured. For more information, refer to the console",
@@ -46,5 +48,5 @@ func Rfc3161(w http.ResponseWriter, body []byte) {
 	}
 
 	w.Header().Add("Content-Type", RFC3161_REPLY)
-	fmt.Fprintf(w, "%s", resp)
+	fmt.Fprintf(w, "%s", derResp)
 }

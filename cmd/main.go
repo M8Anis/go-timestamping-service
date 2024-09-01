@@ -10,5 +10,5 @@ import (
 func main() {
 	http.HandleFunc("/", service.HttpEndpoint)
 
-	log.Fatal(http.ListenAndServe("192.168.1.33:8123", nil))
+	log.Fatal(http.ListenAndServe("0.0.0.0:8080", nil))
 }
