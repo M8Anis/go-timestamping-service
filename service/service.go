@@ -1,7 +1,7 @@
 package service
 
 import (
-	"crypto/ecdsa"
+	"crypto"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
@@ -13,7 +13,7 @@ var chainLength int
 var fullCertChain []*x509.Certificate // With `signingCertificate`
 var certChain []*x509.Certificate     // Without `signingCertificate`
 
-var signingKey *ecdsa.PrivateKey
+var signingKey crypto.Signer // RSA or EC
 var signingCertificate *x509.Certificate
 
 func init() {
@@ -27,7 +27,11 @@ func init() {
 	}
 	signingKey, err = x509.ParseECPrivateKey(key.Bytes)
 	if err != nil {
-		log.Fatalf("EC private key cannot be parsed: %s", err)
+		ecParseErr := err
+		signingKey, err = x509.ParsePKCS1PrivateKey(key.Bytes)
+		if err != nil {
+			log.Fatalf("Private key cannot be parsed. EC: %s; RSA: %s", ecParseErr, err)
+		}
 	}
 
 	certFile := "./certs/ts-crt.pem"
