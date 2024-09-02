@@ -9,11 +9,11 @@ import (
 	"os"
 )
 
-var chainLength int
-var fullCertChain []*x509.Certificate // With `signingCertificate`
-var certChain []*x509.Certificate     // Without `signingCertificate`
+var chainLength int = 0
+var fullCertChain []*x509.Certificate // Chain with `signingCertificate`
+var certChain []*x509.Certificate     // Chain without `signingCertificate`
 
-var signingKey crypto.Signer // RSA or EC
+var signingKey crypto.Signer // RSA or EC private key
 var signingCertificate *x509.Certificate
 
 func init() {
@@ -35,6 +35,7 @@ func init() {
 	}
 
 	certFile := "./certs/ts-crt.pem"
+	// Chain exist check
 	if _, err := os.Stat("./certs/ts-crt_chain.pem"); !errors.Is(err, os.ErrNotExist) {
 		certFile = "./certs/ts-crt_chain.pem"
 	}
@@ -42,15 +43,16 @@ func init() {
 	for {
 		pemCert, rest := pem.Decode(pemCertChain)
 		if pemCert == nil {
-			log.Fatalf("Certificate from chain cannot be decoded: %s", err)
+			log.Fatalf("Certificate cannot be decoded: %s", err)
 		}
 		cert, err := x509.ParseCertificate(pemCert.Bytes)
 		if err != nil {
 			log.Fatalf("Certificate cannot be parsed: %s", err)
 		}
-		fullCertChain = append(fullCertChain, cert)
 
-		chainLength = len(fullCertChain)
+		fullCertChain = append(fullCertChain, cert)
+		chainLength++
+
 		if chainLength > 1 {
 			curCert := fullCertChain[chainLength-1]
 			prevCert := fullCertChain[chainLength-2]
