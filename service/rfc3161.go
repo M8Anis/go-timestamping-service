@@ -34,6 +34,9 @@ func Rfc3161(w http.ResponseWriter, derReq []byte) {
 		// idk but its needed
 		Policy: asn1.ObjectIdentifier{0, 0, 0},
 	}
+	if chainLength > 1 {
+		ts.Certificates = certChain
+	}
 
 	derResp, err := ts.CreateResponseWithOpts(signingCertificate, signingKey, crypto.SHA256)
 	if err != nil {

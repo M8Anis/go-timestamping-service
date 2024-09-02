@@ -1,7 +1,6 @@
 package service
 
 import (
-	"crypto/x509"
 	"encoding/asn1"
 	"encoding/base64"
 	"encoding/pem"
@@ -50,7 +49,7 @@ func Authenticode(w http.ResponseWriter, pemReq string) {
 		return
 	}
 
-	derResp, err := cms.Sign(req.ContentInfo.Content.Bytes, []*x509.Certificate{signingCertificate}, signingKey)
+	derResp, err := cms.Sign(req.ContentInfo.Content.Bytes, fullCertChain, signingKey)
 	if err != nil {
 		ErrorPage(w, http.StatusInternalServerError,
 			"Error has occured. For more information, refer to the console",
