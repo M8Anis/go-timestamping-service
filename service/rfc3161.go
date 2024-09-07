@@ -3,31 +3,26 @@ package service
 import (
 	"crypto"
 	"encoding/asn1"
-	"fmt"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/digitorus/timestamp"
 )
 
 // At now, only SHA256 response signing is supported
-func Rfc3161(w http.ResponseWriter, derReq []byte) {
-	req, err := timestamp.ParseRequest(derReq)
+func Rfc3161(req []byte) (resp []byte, e *HttpError) {
+	tsReq, err := timestamp.ParseRequest(req)
 	if err != nil {
-		ErrorPage(w, http.StatusBadRequest,
-			"Error while parsing the request. For more information, refer to the console",
-		)
 		log.Printf("Request cannot be parsed: %s", err)
-		return
+		return nil, ErrorWhileParsingRequest
 	}
 
-	ts := timestamp.Timestamp{
+	tsResp := timestamp.Timestamp{
 		AddTSACertificate: true,
 
-		HashAlgorithm: req.HashAlgorithm,
-		HashedMessage: req.HashedMessage,
-		Nonce:         req.Nonce,
+		HashAlgorithm: tsReq.HashAlgorithm,
+		HashedMessage: tsReq.HashedMessage,
+		Nonce:         tsReq.Nonce,
 
 		Time: time.Now().UTC(),
 
@@ -35,18 +30,14 @@ func Rfc3161(w http.ResponseWriter, derReq []byte) {
 		Policy: asn1.ObjectIdentifier{0, 0, 0},
 	}
 	if chainLength > 1 {
-		ts.Certificates = certChain
+		tsResp.Certificates = certChain
 	}
 
-	derResp, err := ts.CreateResponseWithOpts(signingCertificate, signingKey, crypto.SHA256)
+	resp, err = tsResp.CreateResponseWithOpts(signingCertificate, signingKey, crypto.SHA256)
 	if err != nil {
-		ErrorPage(w, http.StatusInternalServerError,
-			"Error has occured. For more information, refer to the console",
-		)
 		log.Printf("Response cannot be created: %s", err)
-		return
+		return nil, GenericError
 	}
 
-	w.Header().Add("Content-Type", RFC3161_REPLY)
-	fmt.Fprintf(w, "%s", derResp)
+	return
 }

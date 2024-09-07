@@ -40,23 +40,33 @@ func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer r.Body.Close()
-	body, err := io.ReadAll(r.Body)
+	req, err := io.ReadAll(r.Body)
 	if err != nil {
-		ErrorPage(w, http.StatusInternalServerError,
-			"Error has occured. For more information, refer to the console",
-		)
 		log.Printf("Body cannot be read: %s", err)
+		ErrorPage(w, GenericError.Code(), GenericError.Error())
 		return
 	}
-	if len(body) == 0 {
+	if len(req) == 0 {
 		ErrorPage(w, http.StatusBadRequest, "Request body must be present")
 		return
 	}
 
+	var e *HttpError
+	var resp []byte
 	switch contentType {
 	case RFC3161_QUERY:
-		Rfc3161(w, body)
+		if resp, e = Rfc3161(req); e != nil {
+			ErrorPage(w, e.Code(), e.Error())
+			return
+		}
+		w.Header().Add("Content-Type", RFC3161_REPLY)
 	case AUTHENTICODE:
-		Authenticode(w, string(body))
+		if resp, e = Authenticode(req); e != nil {
+			ErrorPage(w, e.Code(), e.Error())
+			return
+		}
+		w.Header().Add("Content-Type", AUTHENTICODE)
 	}
+
+	fmt.Fprintf(w, "%s", resp)
 }
