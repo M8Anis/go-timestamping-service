@@ -34,7 +34,7 @@ func Authenticode(req []byte) (resp []byte, e *HttpError) {
 		return nil, ErrorWhileParsingRequest
 	}
 
-	tsReq := &AuthenticodeTimestampRequest{}
+	tsReq := AuthenticodeTimestampRequest{}
 	_, err = asn1.Unmarshal(derReq, &tsReq)
 	if err != nil {
 		log.Printf("Request cannot be decoded (ASN.1): %s", err)
