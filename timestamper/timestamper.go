@@ -39,10 +39,11 @@ func QueryValid(contentType string) bool {
 	switch contentType {
 	case RFC3161_QUERY:
 	case AUTHENTICODE:
-		return true
+		break
 	default:
+		return false
 	}
-	return false
+	return true
 }
 
 func AddReplyContentType(w http.ResponseWriter, queryContentType string) {
