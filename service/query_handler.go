@@ -15,7 +15,7 @@ const RFC3161_QUERY string = "application/timestamp-query"
 
 const AUTHENTICODE string = "application/octet-stream"
 
-func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
+func handleQuery(w http.ResponseWriter, r *http.Request) {
 	contentType := strings.ToLower(r.Header.Get("Content-Type"))
 	if RFC3161_QUERY != contentType && AUTHENTICODE != contentType {
 		sendErrorPage(w, http.StatusUnsupportedMediaType,
