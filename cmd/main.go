@@ -118,6 +118,14 @@ func init() {
 		log.Fatalf("Cannot read CA chain: %s", err)
 	}
 
+	if len(_ca_chain) == 0 {
+		log.Fatal("Invalid CA chain: No CAs in chain")
+	}
+
+	if err := _cert.CheckSignatureFrom(_ca_chain[0]); err != nil {
+		log.Fatalf("Timestamper certificate not been issued by CA in the chain (%s)", err)
+	}
+
 	_full_chain = append([]*x509.Certificate{_cert}, _ca_chain...)
 }
 
