@@ -11,7 +11,7 @@ import (
 )
 
 // At now, only SHA256 response signing is supported
-func (stamper *Timestamper) Rfc3161(req []byte) (resp []byte, status int) {
+func (stamper *Timestamper) rfc3161(req []byte) (resp []byte, status int) {
 	tsReq, err := timestamp.ParseRequest(req)
 	if err != nil {
 		logrus.Infof("Request cannot be parsed: %s", err)
@@ -38,5 +38,5 @@ func (stamper *Timestamper) Rfc3161(req []byte) (resp []byte, status int) {
 		return nil, http.StatusInternalServerError
 	}
 
-	return
+	return resp, http.StatusOK
 }
