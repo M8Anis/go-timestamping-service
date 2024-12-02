@@ -18,6 +18,7 @@ func (stamper *Timestamper) Rfc3161(req []byte) (resp []byte, e *HttpError) {
 	}
 
 	tsResp := timestamp.Timestamp{
+		Certificates:      stamper.CaChain,
 		AddTSACertificate: true,
 
 		HashAlgorithm: tsReq.HashAlgorithm,
@@ -28,9 +29,6 @@ func (stamper *Timestamper) Rfc3161(req []byte) (resp []byte, e *HttpError) {
 
 		// idk but its needed
 		Policy: asn1.ObjectIdentifier{0, 0, 0},
-	}
-	if stamper.ChainLength > 1 {
-		tsResp.Certificates = stamper.CertChain
 	}
 
 	resp, err = tsResp.CreateResponseWithOpts(stamper.Certificate, stamper.PrivateKey, crypto.SHA256)

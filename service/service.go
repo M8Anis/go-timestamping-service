@@ -11,17 +11,16 @@ import (
 
 var instance *timestamper.Timestamper
 
-func Serve(certChainLen int, fullCertChain, certChain []*x509.Certificate, timestamperCert *x509.Certificate, timestamperPrivKey crypto.Signer) {
+func Serve(host string, fullChain, caChain []*x509.Certificate, stamperCert *x509.Certificate, stamperPrivKey crypto.Signer) {
 	instance = &timestamper.Timestamper{
-		CertChain:   certChain,
-		Certificate: timestamperCert,
-		PrivateKey:  timestamperPrivKey,
+		FullChain: fullChain,
 
-		FullCertChain: fullCertChain,
-		ChainLength:   certChainLen,
+		CaChain:     caChain,
+		Certificate: stamperCert,
+		PrivateKey:  stamperPrivKey,
 	}
 
 	http.HandleFunc("/", HttpEndpoint)
 
-	log.Fatal(http.ListenAndServe("0.0.0.0:8080", nil))
+	log.Fatal(http.ListenAndServe(host, nil))
 }

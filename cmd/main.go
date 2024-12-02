@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+	"fmt"
 	"log"
 	"os"
 	"slices"
@@ -23,7 +24,7 @@ var (
 )
 
 var (
-	_ca_chain, _cert_chain []*x509.Certificate
+	_ca_chain, _full_chain []*x509.Certificate
 
 	_cert *x509.Certificate
 	_priv crypto.Signer
@@ -117,12 +118,13 @@ func init() {
 		log.Fatalf("Cannot read CA chain: %s", err)
 	}
 
-	_cert_chain = append([]*x509.Certificate{_cert}, _ca_chain...)
+	_full_chain = append([]*x509.Certificate{_cert}, _ca_chain...)
 }
 
 func main() {
 	service.Serve(
-		len(_cert_chain), _cert_chain,
+		fmt.Sprintf("%s:%d", _address, _port),
+		_full_chain,
 		_ca_chain, _cert, _priv,
 	)
 }

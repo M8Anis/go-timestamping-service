@@ -41,7 +41,7 @@ func (stamper *Timestamper) Authenticode(req []byte) (resp []byte, e *HttpError)
 		return nil, ErrorWhileParsingRequest
 	}
 
-	derResp, err := cms.Sign(tsReq.ContentInfo.Content.Bytes, stamper.FullCertChain, stamper.PrivateKey)
+	derResp, err := cms.Sign(tsReq.ContentInfo.Content.Bytes, stamper.FullChain, stamper.PrivateKey)
 	if err != nil {
 		log.Printf("Response cannot be signed: %s", err)
 		return nil, GenericError

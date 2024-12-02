@@ -13,4 +13,4 @@ certtool --generate-privkey --key-type rsa --bits 3072 --no-text --outfile ts-ke
 certtool --generate-certificate --load-ca-privkey test-ts-ca/ca-key.pem --load-ca-certificate test-ts-ca/ca-crt.pem \
     --load-privkey ts-key.pem --outfile ts-crt.pem --template ts.cfg --hash=sha256
 
-cat ts-crt.pem test-ts-ca/ca-crt.pem test-root/ca-crt.pem > ts-crt_chain.pem
+cat test-ts-ca/ca-crt.pem test-root/ca-crt.pem > ts-crt_chain.pem
