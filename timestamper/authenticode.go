@@ -4,6 +4,7 @@ import (
 	"encoding/asn1"
 	"encoding/base64"
 	"encoding/pem"
+	"net/http"
 	"strings"
 
 	cms "github.com/github/smimesign/ietf-cms"
@@ -23,7 +24,7 @@ type AuthenticodeTimestampRequest struct {
 }
 
 // The signature algorithm is determined from the certificate, I think
-func (stamper *Timestamper) Authenticode(req []byte) (resp []byte, e *HttpError) {
+func (stamper *Timestamper) Authenticode(req []byte) (resp []byte, status int) {
 	// Windows sends a nul-terminated string and disrupts the Base64 decoder in Golang)
 	pemReq := strings.ReplaceAll(string(req), "\x00", "")
 
@@ -31,20 +32,20 @@ func (stamper *Timestamper) Authenticode(req []byte) (resp []byte, e *HttpError)
 	derReq, err := base64.StdEncoding.DecodeString(pemReq)
 	if err != nil {
 		logrus.Infof("Request cannot be decoded (Base64): %s", err)
-		return nil, ErrorWhileParsingRequest
+		return nil, http.StatusBadRequest
 	}
 
 	tsReq := AuthenticodeTimestampRequest{}
 	_, err = asn1.Unmarshal(derReq, &tsReq)
 	if err != nil {
 		logrus.Infof("Request cannot be decoded (ASN.1): %s", err)
-		return nil, ErrorWhileParsingRequest
+		return nil, http.StatusBadRequest
 	}
 
 	derResp, err := cms.Sign(tsReq.ContentInfo.Content.Bytes, stamper.FullChain, stamper.PrivateKey)
 	if err != nil {
 		logrus.Errorf("Response cannot be signed: %s", err)
-		return nil, GenericError
+		return nil, http.StatusInternalServerError
 	}
 
 	pemResp := pem.EncodeToMemory(&pem.Block{
@@ -53,7 +54,7 @@ func (stamper *Timestamper) Authenticode(req []byte) (resp []byte, e *HttpError)
 	})
 	if pemResp == nil {
 		logrus.Errorf("Response encoded in PEM is NULL")
-		return nil, GenericError
+		return nil, http.StatusInternalServerError
 	}
 
 	// Removing the PEM header and footer from the response, as in the request

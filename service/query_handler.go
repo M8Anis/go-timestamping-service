@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"strings"
 
-	"gitea.m8anis.internal/M8Anis/go-timestamping-service/timestamper"
 	"github.com/sirupsen/logrus"
 )
 
@@ -18,21 +17,7 @@ const AUTHENTICODE string = "application/octet-stream"
 func handleQuery(w http.ResponseWriter, r *http.Request) {
 	contentType := strings.ToLower(r.Header.Get("Content-Type"))
 	if RFC3161_QUERY != contentType && AUTHENTICODE != contentType {
-		sendErrorPage(w, http.StatusUnsupportedMediaType,
-			fmt.Sprintf(
-				"`Content-Type` must be `%s` for RFC3161 or `%s` for Authenticode(tm)",
-				RFC3161_QUERY, AUTHENTICODE,
-			),
-		)
-		return
-	}
-
-	if http.MethodPost != r.Method {
-		sendErrorPage(w, http.StatusMethodNotAllowed,
-			fmt.Sprintf(
-				"Method `%s` is not allowed", r.Method,
-			),
-		)
+		w.WriteHeader(http.StatusUnsupportedMediaType)
 		return
 	}
 
@@ -40,35 +25,31 @@ func handleQuery(w http.ResponseWriter, r *http.Request) {
 	req, err := io.ReadAll(r.Body)
 	if err != nil {
 		logrus.Errorf("Body cannot be read: %s", err)
-		sendErrorPage(w, timestamper.GenericError.Code(), timestamper.GenericError.Error())
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 	if len(req) == 0 {
-		sendErrorPage(w, http.StatusBadRequest, "Request body must be present")
+		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(w, "Request body must be present")
 		return
 	}
 
-	var e *timestamper.HttpError
+	var status int
 	var resp []byte
 	switch contentType {
 	case RFC3161_QUERY:
-		if resp, e = instance.Rfc3161(req); e != nil {
-			sendErrorPage(w, e.Code(), e.Error())
+		if resp, status = instance.Rfc3161(req); status != 0 {
+			w.WriteHeader(status)
 			return
 		}
 		w.Header().Add("Content-Type", RFC3161_REPLY)
 	case AUTHENTICODE:
-		if resp, e = instance.Authenticode(req); e != nil {
-			sendErrorPage(w, e.Code(), e.Error())
+		if resp, status = instance.Authenticode(req); status != 0 {
+			w.WriteHeader(status)
 			return
 		}
 		w.Header().Add("Content-Type", AUTHENTICODE)
 	}
 
 	fmt.Fprintf(w, "%s", resp)
-}
-
-func sendErrorPage(w http.ResponseWriter, status int, description string) {
-	w.WriteHeader(status)
-	fmt.Fprintln(w, description)
 }
