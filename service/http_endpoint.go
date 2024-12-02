@@ -17,13 +17,8 @@ const AUTHENTICODE string = "application/octet-stream"
 
 func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
 	contentType := strings.ToLower(r.Header.Get("Content-Type"))
-	if len(contentType) == 0 {
-		HomePage(w)
-		return
-	}
-
 	if RFC3161_QUERY != contentType && AUTHENTICODE != contentType {
-		ErrorPage(w, http.StatusBadRequest,
+		sendErrorPage(w, http.StatusUnsupportedMediaType,
 			fmt.Sprintf(
 				"`Content-Type` must be `%s` for RFC3161 or `%s` for Authenticode(tm)",
 				RFC3161_QUERY, AUTHENTICODE,
@@ -33,7 +28,7 @@ func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if http.MethodPost != r.Method {
-		ErrorPage(w, http.StatusMethodNotAllowed,
+		sendErrorPage(w, http.StatusMethodNotAllowed,
 			fmt.Sprintf(
 				"Method `%s` is not allowed", r.Method,
 			),
@@ -45,11 +40,11 @@ func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
 	req, err := io.ReadAll(r.Body)
 	if err != nil {
 		logrus.Errorf("Body cannot be read: %s", err)
-		ErrorPage(w, timestamper.GenericError.Code(), timestamper.GenericError.Error())
+		sendErrorPage(w, timestamper.GenericError.Code(), timestamper.GenericError.Error())
 		return
 	}
 	if len(req) == 0 {
-		ErrorPage(w, http.StatusBadRequest, "Request body must be present")
+		sendErrorPage(w, http.StatusBadRequest, "Request body must be present")
 		return
 	}
 
@@ -58,17 +53,22 @@ func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
 	switch contentType {
 	case RFC3161_QUERY:
 		if resp, e = instance.Rfc3161(req); e != nil {
-			ErrorPage(w, e.Code(), e.Error())
+			sendErrorPage(w, e.Code(), e.Error())
 			return
 		}
 		w.Header().Add("Content-Type", RFC3161_REPLY)
 	case AUTHENTICODE:
 		if resp, e = instance.Authenticode(req); e != nil {
-			ErrorPage(w, e.Code(), e.Error())
+			sendErrorPage(w, e.Code(), e.Error())
 			return
 		}
 		w.Header().Add("Content-Type", AUTHENTICODE)
 	}
 
 	fmt.Fprintf(w, "%s", resp)
+}
+
+func sendErrorPage(w http.ResponseWriter, status int, description string) {
+	w.WriteHeader(status)
+	fmt.Fprintln(w, description)
 }
