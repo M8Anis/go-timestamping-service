@@ -11,13 +11,13 @@ import (
 
 var instance *timestamper.Timestamper
 
-func Serve(host string, fullChain, caChain []*x509.Certificate, stamperCert *x509.Certificate, stamperPrivKey crypto.Signer) {
+func Serve(host string, caChain []*x509.Certificate, stamperCert *x509.Certificate, stamperPrivKey crypto.Signer) {
 	instance = &timestamper.Timestamper{
-		FullChain: fullChain,
-
 		CaChain:     caChain,
 		Certificate: stamperCert,
 		PrivateKey:  stamperPrivKey,
+
+		FullChain: append([]*x509.Certificate{stamperCert}, caChain...),
 	}
 
 	http.HandleFunc("/", HttpEndpoint)
