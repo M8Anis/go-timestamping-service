@@ -1,4 +1,4 @@
-package service
+package timestamper
 
 import "net/http"
 

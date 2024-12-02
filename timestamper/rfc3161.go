@@ -1,4 +1,4 @@
-package service
+package timestamper
 
 import (
 	"crypto"
@@ -10,7 +10,7 @@ import (
 )
 
 // At now, only SHA256 response signing is supported
-func Rfc3161(req []byte) (resp []byte, e *HttpError) {
+func (stamper *Timestamper) Rfc3161(req []byte) (resp []byte, e *HttpError) {
 	tsReq, err := timestamp.ParseRequest(req)
 	if err != nil {
 		log.Printf("Request cannot be parsed: %s", err)
@@ -29,11 +29,11 @@ func Rfc3161(req []byte) (resp []byte, e *HttpError) {
 		// idk but its needed
 		Policy: asn1.ObjectIdentifier{0, 0, 0},
 	}
-	if chainLength > 1 {
-		tsResp.Certificates = certChain
+	if stamper.ChainLength > 1 {
+		tsResp.Certificates = stamper.CertChain
 	}
 
-	resp, err = tsResp.CreateResponseWithOpts(signingCertificate, signingKey, crypto.SHA256)
+	resp, err = tsResp.CreateResponseWithOpts(stamper.Certificate, stamper.PrivateKey, crypto.SHA256)
 	if err != nil {
 		log.Printf("Response cannot be created: %s", err)
 		return nil, GenericError

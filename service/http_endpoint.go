@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"gitea.m8anis.internal/M8Anis/go-timestamping-service/timestamper"
 )
 
 const RFC3161_REPLY string = "application/timestamp-reply"
@@ -43,7 +45,7 @@ func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
 	req, err := io.ReadAll(r.Body)
 	if err != nil {
 		log.Printf("Body cannot be read: %s", err)
-		ErrorPage(w, GenericError.Code(), GenericError.Error())
+		ErrorPage(w, timestamper.GenericError.Code(), timestamper.GenericError.Error())
 		return
 	}
 	if len(req) == 0 {
@@ -51,17 +53,17 @@ func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var e *HttpError
+	var e *timestamper.HttpError
 	var resp []byte
 	switch contentType {
 	case RFC3161_QUERY:
-		if resp, e = Rfc3161(req); e != nil {
+		if resp, e = instance.Rfc3161(req); e != nil {
 			ErrorPage(w, e.Code(), e.Error())
 			return
 		}
 		w.Header().Add("Content-Type", RFC3161_REPLY)
 	case AUTHENTICODE:
-		if resp, e = Authenticode(req); e != nil {
+		if resp, e = instance.Authenticode(req); e != nil {
 			ErrorPage(w, e.Code(), e.Error())
 			return
 		}

@@ -1,4 +1,4 @@
-package service
+package timestamper
 
 import (
 	"encoding/asn1"
@@ -23,7 +23,7 @@ type AuthenticodeTimestampRequest struct {
 }
 
 // The signature algorithm is determined from the certificate, I think
-func Authenticode(req []byte) (resp []byte, e *HttpError) {
+func (stamper *Timestamper) Authenticode(req []byte) (resp []byte, e *HttpError) {
 	// Windows sends a nul-terminated string and disrupts the Base64 decoder in Golang)
 	pemReq := strings.ReplaceAll(string(req), "\x00", "")
 
@@ -41,7 +41,7 @@ func Authenticode(req []byte) (resp []byte, e *HttpError) {
 		return nil, ErrorWhileParsingRequest
 	}
 
-	derResp, err := cms.Sign(tsReq.ContentInfo.Content.Bytes, fullCertChain, signingKey)
+	derResp, err := cms.Sign(tsReq.ContentInfo.Content.Bytes, stamper.FullCertChain, stamper.PrivateKey)
 	if err != nil {
 		log.Printf("Response cannot be signed: %s", err)
 		return nil, GenericError
