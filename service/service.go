@@ -3,10 +3,10 @@ package service
 import (
 	"crypto"
 	"crypto/x509"
-	"log"
 	"net/http"
 
 	"gitea.m8anis.internal/M8Anis/go-timestamping-service/timestamper"
+	"github.com/sirupsen/logrus"
 )
 
 var instance *timestamper.Timestamper
@@ -22,5 +22,5 @@ func Serve(host string, caChain []*x509.Certificate, stamperCert *x509.Certifica
 
 	http.HandleFunc("/", HttpEndpoint)
 
-	log.Fatal(http.ListenAndServe(host, nil))
+	logrus.Fatal(http.ListenAndServe(host, nil))
 }

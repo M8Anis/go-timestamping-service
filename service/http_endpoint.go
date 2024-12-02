@@ -3,11 +3,11 @@ package service
 import (
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 
 	"gitea.m8anis.internal/M8Anis/go-timestamping-service/timestamper"
+	"github.com/sirupsen/logrus"
 )
 
 const RFC3161_REPLY string = "application/timestamp-reply"
@@ -44,7 +44,7 @@ func HttpEndpoint(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	req, err := io.ReadAll(r.Body)
 	if err != nil {
-		log.Printf("Body cannot be read: %s", err)
+		logrus.Errorf("Body cannot be read: %s", err)
 		ErrorPage(w, timestamper.GenericError.Code(), timestamper.GenericError.Error())
 		return
 	}

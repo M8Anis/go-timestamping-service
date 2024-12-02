@@ -3,17 +3,17 @@ package timestamper
 import (
 	"crypto"
 	"encoding/asn1"
-	"log"
 	"time"
 
 	"github.com/digitorus/timestamp"
+	"github.com/sirupsen/logrus"
 )
 
 // At now, only SHA256 response signing is supported
 func (stamper *Timestamper) Rfc3161(req []byte) (resp []byte, e *HttpError) {
 	tsReq, err := timestamp.ParseRequest(req)
 	if err != nil {
-		log.Printf("Request cannot be parsed: %s", err)
+		logrus.Infof("Request cannot be parsed: %s", err)
 		return nil, ErrorWhileParsingRequest
 	}
 
@@ -33,7 +33,7 @@ func (stamper *Timestamper) Rfc3161(req []byte) (resp []byte, e *HttpError) {
 
 	resp, err = tsResp.CreateResponseWithOpts(stamper.Certificate, stamper.PrivateKey, crypto.SHA256)
 	if err != nil {
-		log.Printf("Response cannot be created: %s", err)
+		logrus.Errorf("Response cannot be created: %s", err)
 		return nil, GenericError
 	}
 
